@@ -17,7 +17,7 @@ parser.add_argument(
 	"-e", "--endpoint",
 	dest='endpoint',action='store',
 	default='52.3.213.61:12000',
-	help='Define the endpoint to use (default: AWS registry)'
+	help='Define the endpoint to use (default: AWS registry IP)'
 )
 
 parser.add_argument(
