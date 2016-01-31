@@ -2,7 +2,7 @@ import client
 import argparse
 import sys
 import logging
-
+import network
 
 #set up the base logger (This is the root logger)
 log = logging.getLogger()
@@ -77,7 +77,6 @@ Logging in as:
 		args.lname,
 		args.anumber,
 		args.alias,
-		args.endpoint
 	)
 )
 
@@ -90,15 +89,25 @@ session = client.login(
 	args.endpoint
 )
 
-log.debug("Requesting Game List")
 
-#get the game list
-games = client.game_list(session)
+while(session.gamemgr == None):
+	log.info("Requesting Game List")
 
-log.info("Game List Received")
-log.debug(str(games))
+	#get the game list
+	session, games = client.game_list(session)
 
-#try joining some games
-for game in games:
-	session = join_game(session,game)
-	if session.gamesock != None: break
+	if(games != None):
+		log.info("Game List Received")
+		log.debug(str(games))
+		
+		#try joining some games
+		for game in games:
+			log.info("Joining game: "+game["Label"])
+			session = client.join_game(session,game)
+			if session.gamemgr != None: break
+
+log.info("Successfully joined game.")
+
+#Nothing left to do - in a game. Just check for keepalive packets
+while(1):
+	network.receive(session)

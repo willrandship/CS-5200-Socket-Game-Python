@@ -18,10 +18,10 @@ class TestPacketGeneration(unittest.TestCase):
 		testcase = {
 			"__type":"LoginRequest:#Messages.RequestMessages",
 			"Identity":packet.id_packet(id),
-			"ProcessLabel":None,
+			"ProcessLabel":"test",
 			"ProcessType" :3
 		}
-		self.assertEqual(testcase, packet.login_request(id))
+		self.assertEqual(testcase,packet.login_request(id,plabel="test"))
 
 class TestJsonDict(unittest.TestCase):
 

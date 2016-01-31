@@ -2,22 +2,28 @@
 import json
 import logging
 import socket
-
+import time
 
 #local imports
 import packet
 import network
 
+log = logging.getLogger("client")
+
 class Session:
 	id = packet.ID()
 	socket = None
+	registry = None
+	gamemgr = None
 	login = False
 	gamelogin = False
 	procinfo = None
 
 #Log into the main server. Returns a player session that has not
 #connected to any games yet.
-def login(fname, lname, anumber, alias, endpoint):
+def login(fname, lname, anumber, alias, endpoint, label=None):
+	
+	if label==None: label=alias
 	
 	id = packet.ID()
 
@@ -30,23 +36,24 @@ def login(fname, lname, anumber, alias, endpoint):
 	
 	session.id = id
 	while session.socket == None:
-		session.socket = network.connect(endpoint)
-	network.send( session, packet.login_request(session.id) )
+		session.socket, session.registry = network.connect(endpoint)
 	
 	#While we're still waiting on a login reply, keep listening
 	status = 0
 	while(session.login == False):
+		network.send( session, packet.login_request(session.id, label) )
+		time.sleep(1)
 		data = network.receive(session)
 		if data==None: continue
 
-		if(packet["__type"] == "LoginReply:#Messages.ReplyMessages"):
-			if(packet["Success"]):
+		if(data["__type"] == "LoginReply:#Messages.ReplyMessages"):
+			if(data["Success"]):
 				log.info("Login succeeded")
-				session.procinfo = packet["ProcessInfo"]
+				session.procinfo = data["ProcessInfo"]
 				session.login = True
 			else:
 				log.error("Login failed")
-				log.error("Error message was: "+ packet["Note"])
+				log.error("Error message was: "+ data["Note"])
 				return session
 		else:
 			log.warning("Unexpected packet received: " + str(data) )
@@ -55,42 +62,37 @@ def login(fname, lname, anumber, alias, endpoint):
 
 #returns a list of games
 def game_list(session):
-	network.send( session, packet.gamelist_request())
 	while(1):
+		network.send( session, packet.gamelist_request())
+		time.sleep(1)
 		a = network.receive( session )
 		if a==None: continue
 
 		if a["__type"] ==  "GameListReply:#Messages.ReplyMessages":
-			return a["GameInfo"]
+			return session, a["GameInfo"]
 		else:
-			log.warning("Unexpected packet received: " + str(data) )
+			log.warning("Unexpected packet received: " + str(a) )
+			return session, None
 
 #Join a game. Returns the modified session. (Fail -> gamesock == None)
 def join_game(session, game):
-	gamesock = network.connect(
-		game["GameManager"]["Endpoint"]["Host"] +
-		str(game["GameManager"]["Endpoint"]["Port"])
-	)
 	
-	if gamesock==None:
-		log.debug("Failed to connect to game: " + game["GameId"])
-		return session
-	
-	session.gamesock = gamesock
-	
-	network.send_game(session, packet.joingame_request(game, session))
+	session.gamemgr = game["GameManager"]
 	
 	while session.gamelogin == False:
-		data = network.receive_game(session)
+		#Keep trying to join game until it works
+		network.send_game(session, packet.joingame_request(game))
+		time.sleep(1)
+		data = network.receive(session)
 		if data==None: continue
 
-		if(packet["__type"] == "JoinGameReply:#Messages.ReplyMessages"):
-			if(packet["Success"]):
+		if(data["__type"] == "JoinGameReply:#Messages.ReplyMessages"):
+			if(data["Success"]):
 				log.info("Login succeeded")
 				session.gamelogin = True
 			else:
 				log.error("Login failed")
-				log.error("Error message was: "+ packet["Note"])
+				log.error("Error message was: "+ data["Note"])
 				return session
 		else:
 			log.warning("Unexpected packet received: " + str(data) )

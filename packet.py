@@ -2,9 +2,11 @@
 
 import json
 import logging
+import network
 
 #gets a descendant to the root log
 log = logging.getLogger("client.packet")
+log.setLevel(logging.INFO)
 
 #Identity structure
 class ID:
@@ -14,7 +16,7 @@ class ID:
 	lname = "Player"
 
 #generates a dict to convert to JSON on sending. Returns a python-style dictionary.
-def login_request(id, plabel=None):
+def login_request(id, plabel="TestLabel"):
 	output = {
 		"__type"		: "LoginRequest:#Messages.RequestMessages",
 		"Identity"		: id_packet(id),
@@ -56,15 +58,15 @@ def joingame_request(game):
 	out = {
 		"__type":"JoinGameRequest:#Messages.RequestMessages",
 		"GameId":game["GameId"],
-		"Player":player_packet(game)
+		"Player":player_packet()
 	}
 	log.debug("Generated packet: " + json.dumps(out) )
 	return out
 
 #Generate the player packet for joining a game
-def player_packet(game,label):
+def player_packet():
 	out = {
-		"PublicKey":null,
+		"PublicKey":None,
 		"Draws":0,
 		"EndPoint":{},
 		"HasUmbrellaRaised":False,
@@ -83,18 +85,22 @@ def player_packet(game,label):
 
 #Parse a received packet's data into a dict
 #Also implicitly handles keep-alive.
-def parse(data,session):
+def parse(data,addr,session):
 	
 	log.debug("Parsing: "+data)
 	
 	try:
 		packet = json.loads(data)
+
+	#Bad packet - Log error and return None (Try to keep working)
 	except json.decoder.JSONDecodeError:
 		log.error("Bad JSON Packet: " + data)
 		return None
 	
+	#reply request - handle and return None
 	if( packet["__type"] == "AliveRequest:#Messages.RequestMessages" ):
 		log.debug("Sending KeepAlive Reply")
-		send(session,alive_reply())
+		network.send(session,alive_reply())
+		return None
 	
 	return packet
