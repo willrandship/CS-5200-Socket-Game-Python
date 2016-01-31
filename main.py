@@ -31,14 +31,14 @@ parser.add_argument(
 	"-l", "--last",
 	dest='lname',action='store',
 	default='Shipley',
-	help='Set your first name (default: Shipley)'
+	help='Set your last name (default: Shipley)'
 )
 
 parser.add_argument(
 	"-n", "--anumber",
 	dest='anumber',action='store',
 	default='A01514559',
-	help='Set your first name (default: A01514559)'
+	help='Set your A Number (default: A01514559)'
 )
 
 parser.add_argument(
