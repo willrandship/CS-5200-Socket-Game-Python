@@ -13,11 +13,11 @@ If you find the code useful, feel free to use it for anything else. It's GPL lic
 
 ##Usage
 
-\<script\> [-h] [-e ENDPOINT] [-f FNAME] [-l LNAME] [-n ANUMBER] 
+main.py [-h] [-e ENDPOINT] [-f FNAME] [-l LNAME] [-n ANUMBER] 
 [-a ALIAS] [-v]
 
-| arg (short)	| Argument (long)	| Description	|
------------------------------------------------------
+| short arg 	| Long Argument 	| Description	|
+| ------------- | ----------------- | ------------- |
 | -h 			| --help 			| show this help message and exit |
 | -e ENDPOINT	| --endpoint IP:PORT	| Define the endpoint to use (default: AWS registry) |
 | -f FNAME		| --first FNAME		| Set your first name (default: William) |
