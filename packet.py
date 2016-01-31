@@ -1,3 +1,5 @@
+#packet.py - Construct and deconstruct packets for network i/o
+
 import json
 import logging
 
@@ -5,26 +7,19 @@ import logging
 log = logging.getLogger("client.packet")
 
 #Identity structure
-class id:
+class ID:
 	anumber = None
 	alias = "Lazy Player"
 	fname = "Lazy"
 	lname = "Player"
 
-class game:
-	id = 0
-	
-
-class player:
-	
-
 #generates a dict to convert to JSON on sending. Returns a python-style dictionary.
-def login_request(id, plabel=None, pid=0):
+def login_request(id, plabel=None):
 	output = {
 		"__type"		: "LoginRequest:#Messages.RequestMessages",
 		"Identity"		: id_packet(id),
 		"ProcessLabel"	: plabel,
-		"ProcessType"	: pid
+		"ProcessType"	: 3
 	}
 	log.debug("Generated packet: " + json.dumps(output) )
 	return output
@@ -43,7 +38,7 @@ def id_packet(id):
 def alive_reply():
 	out = {
 		"__type":"Reply:#Messages.ReplyMessages",
-		"Note":"Yes, I am, in fact, alive"
+		"Note":"Yes, I am, in fact, alive",
 		"Success":True
 	}
 	log.debug("Generated packet: " + json.dumps(out) )
@@ -60,8 +55,8 @@ def gamelist_request():
 def joingame_request(game):
 	out = {
 		"__type":"JoinGameRequest:#Messages.RequestMessages",
-		"GameId":game["id"],
-		"Player":player_packet(game,label)
+		"GameId":game["GameId"],
+		"Player":player_packet(game)
 	}
 	log.debug("Generated packet: " + json.dumps(out) )
 	return out
@@ -71,37 +66,35 @@ def player_packet(game,label):
 	out = {
 		"PublicKey":null,
 		"Draws":0,
-		"EndPoint":
+		"EndPoint":{},
 		"HasUmbrellaRaised":False,
 		"NumberOfFilledBalloon":0,
 		"NumberOfPennies":0,
 		"NumberOfUnfilledBalloon":0,
 		"NumberOfUnraisedUnbrellas":0,
-		"ProcessId":
-		"Status":
-		"Type":
+		"ProcessId":0,
+		"Status":0,
+		"Type":0,
 		"Wins":0
 	}
 	log.debug("Generated packet: " + json.dumps(out) )
 	return out
 
 
-#Parse a received packet's data, returning based on the type of 
-def parse(data,connection):
+#Parse a received packet's data into a dict
+#Also implicitly handles keep-alive.
+def parse(data,session):
 	
 	log.debug("Parsing: "+data)
 	
-	packet = json.loads(data)
+	try:
+		packet = json.loads(data)
+	except json.decoder.JSONDecodeError:
+		log.error("Bad JSON Packet: " + data)
+		return None
 	
-	if(packet["__type"] == "LoginReply:#Messages.ReplyMessages"):
-		if(packet["Success"]):
-			log.info("Login succeeded")
-			return packet
-		else:
-			log.error("Login failed")
-			log.error("Error message was: "+ packet["Note"])
-			return packet 
-	
-	elif( packet["__type"] == "AliveRequest:#Messages.RequestMessages" ):
+	if( packet["__type"] == "AliveRequest:#Messages.RequestMessages" ):
 		log.debug("Sending KeepAlive Reply")
-		network.send(connection,alive_reply())
+		send(session,alive_reply())
+	
+	return packet
