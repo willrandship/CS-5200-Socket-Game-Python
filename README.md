@@ -13,7 +13,7 @@ If you find the code useful, feel free to use it for anything else. It's GPL lic
 
 ##Usage
 
-<script> [-h] [-e ENDPOINT] [-f FNAME] [-l LNAME] [-n ANUMBER] 
+\<script\> [-h] [-e ENDPOINT] [-f FNAME] [-l LNAME] [-n ANUMBER] 
 [-a ALIAS] [-v]
 
 | arg (short)	| Argument (long)	| Description	|
